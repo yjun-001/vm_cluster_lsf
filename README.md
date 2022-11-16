@@ -9,8 +9,7 @@ Create a three nodes LSF HPC cluster on local windows desktop by using [**vagran
 - Preload  binary  [the IBM Spectrum LSF Suite Community Edition](https://www-01.ibm.com/marketing/iwm/iwm/web/dispatcher.do?source=swerpzsw-lsf-3&mhsrc=ibmsearch_a&mhq=lsf%20install), and unzip to ansible/downloads folder
 
 ## Cluster Inventory file:
-
-https://github.com/yjun-001/vagrant_ansible_three_nodes_cluster/blob/949435031903a27fcd9130e9abce99e0fa7c1a4c/ansible/inventory/hosts#L1-L14
+https://github.com/yjun-001/vm_cluster_lsf/blob/9d64ed70b34aebb6e26b24a9bcd84e1c448d2a50/ansible/inventory/hosts#L1-L14
 
 ## Cluster Nodes build/provision process:
 - vagrant create three virtual box VMs (one master node, two nodes)
