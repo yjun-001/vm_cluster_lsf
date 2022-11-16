@@ -11,8 +11,8 @@ Create a three nodes LSF HPC cluster on local windows desktop by using [**vagran
 ## Cluster Inventory file:
 https://github.com/yjun-001/vm_cluster_lsf/blob/9d64ed70b34aebb6e26b24a9bcd84e1c448d2a50/ansible/inventory/hosts#L1-L14
 
-### Cluster Diagram:
-<img src="https://github.com/yjun-001/vm_cluster_lsf/blob/1c07a8686482ebec73fb3d83d29b31b3d7d549cd/images/vagrant-LSF-cluster-2022-11-11-1510.svg">
+### LSF Cluster Diagram:
+<img src="https://github.com/yjun-001/vm_cluster_lsf/blob/55bc8396dcac5fffc17dadd89bdf3420863478d4/images/vagrant-LSF-cluster-2022-11-11-1510.svg">
 
 ## Cluster Nodes build/provision process:
 - vagrant create three virtual box VMs (one master node, two nodes)
