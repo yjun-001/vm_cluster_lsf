@@ -1,0 +1,33 @@
+---
+- name: provision a lsf node
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: create HPC lsfadmin user
+      user:
+        name: lsfadmin
+        state: present
+        shell: /bin/bash
+        password: "{{ 'Password!' | password_hash('sha512') }}"
+        update_password: on_create
+    - name: modify sshd_config to allow password login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication '
+        insertafter: '#PasswordAuthentication'
+        line: 'PasswordAuthentication yes'
+      notify: restart_sshd
+    - name: sudo
+      copy:
+        dest: /etc/sudoers.d/lsfadmin
+        content: "lsfadmin ALL=(root) NOPASSWD: ALL"
+    - name: Install acl package
+      apt:
+        name: acl
+        state: present
+  handlers:
+    - name: restart_sshd
+      service:
+        name: sshd
+        state: restarted

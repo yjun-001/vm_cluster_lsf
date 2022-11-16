@@ -1,0 +1,6 @@
+---
+- import_playbook: admin_user_add.yaml
+- import_playbook: hostsfile_update.yaml
+- import_playbook: sshkey_process_outer.yaml
+- import_playbook: lsf_install.yaml
+- import_playbook: lsf_verify.yaml

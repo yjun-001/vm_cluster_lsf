@@ -1,0 +1,21 @@
+---
+- name: verify LSF installation and service
+  gather_facts: no
+  hosts: head
+  vars:
+    lsfadmin: lsfadmin
+  tasks:
+    - name: verify LSF service runing
+      become: true
+      become_user: "{{ lsfadmin }}"
+      shell: |
+        . /opt/lsf/conf/profile.lsf
+        lsadmin ckconfig -v
+        lsid
+        bhosts
+      register: shell_output
+      args:
+        chdir: 
+          ~{{ lsfadmin }}
+        warn: false
+    - debug: var=shell_output.stdout_lines

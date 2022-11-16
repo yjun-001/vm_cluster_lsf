@@ -1,0 +1,32 @@
+---
+- name: debug inner loop varialbe
+  debug:
+    msg : "debug: processing user: {{ user_item }} SSH access key"
+- name: SSH KeyGen command
+  tags: run
+  become: yes
+  become_user: "{{ user_item }}"
+  shell: > 
+    ssh-keygen -q -b 2048 -t rsa -N "" -C "SSH access key" -f ~/.ssh/id_rsa
+    creates="~/.ssh/id_rsa"
+- name: Fetch the keyfile from one server to another
+  tags: run
+  become: yes
+  become_user: "{{ user_item }}"
+  fetch: 
+    src: "~{{ user_item }}/.ssh/id_rsa.pub"
+    dest: "/tmp/buffer/{{ ansible_hostname }}-{{ user_item }}-id_rsa.pub"
+    flat: yes
+- name: Copy the key add to authorized_keys using Ansible module
+  tags: run
+  become: yes
+  become_user: "{{ user_item }}"
+  authorized_key:
+    user: "{{ user_item }}"
+    state: present
+    key: "{{ lookup('file','/tmp/buffer/{{ item.dest }}-{{ user_item }}-id_rsa.pub') }}"
+  when: item.dest != ansible_hostname
+  with_items:
+    - { dest: "{{ groups['all_nodes'][0] }}"}
+    - { dest: "{{ groups['all_nodes'][1] }}"}
+    - { dest: "{{ groups['all_nodes'][2] }}"}

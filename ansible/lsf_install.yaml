@@ -1,0 +1,104 @@
+---
+- name: install LSF on all servers 
+  gather_facts: no
+  hosts: all
+  vars:
+    lsfadmin: lsfadmin
+  tasks:
+    - name: create LSF_TOP directory
+      become: true
+      become_user: root
+      file:
+        path: /opt/lsf
+        state: directory
+        owner: "{{ lsfadmin }}"
+        group: "{{ lsfadmin }}"
+        mode: 0755
+    #- name: extract LSF install file, disabled due to too slow
+    #  become: true
+    #  become_user: "{{ lsfadmin }}"
+    #  unarchive:
+    #    src: /vagrant/downloads/ibm_lsf_10.1_ubuntu20.04/lsf10.1_lsfinstall_linux_x86_64.tar.Z
+    #    dest: ~{{ lsfadmin }}
+    - name: extract LSF install file by using shell tar
+      become: true
+      become_user: "{{ lsfadmin }}"
+      shell: >
+        tar xvzf /vagrant/downloads/ibm_lsf_10.1_ubuntu20.04/lsf10.1_lsfinstall_linux_x86_64.tar.Z
+      args:
+        chdir: 
+          ~{{ lsfadmin }}
+        warn: false
+    - name: update install.cfg
+      become: yes
+      become_user: "{{ lsfadmin }}"
+      tags: update_node_pbs_conf
+      lineinfile:
+        path: "~{{ lsfadmin }}/lsf10.1_lsfinstall/install.config"
+        regexp: '{{ item.From }}'
+        line: '{{ item.To }}'
+        state: present
+        #  backup: yes
+      with_items:
+        - { From: '# LSF_TOP="/usr/share/lsf"', To: 'LSF_TOP="/opt/lsf"'}
+        - { From: '# LSF_ADMINS="lsfadmin user1 user2"', To: 'LSF_ADMINS="lsfadmin"'}
+        - { From: '# LSF_MASTER_LIST="hostm hosta hostc"', To: 'LSF_MASTER_LIST="master"'}
+        - { From: '# LSF_CLUSTER_NAME="cluster1"', To: 'LSF_CLUSTER_NAME="lsf_demo"'}
+        - { From: '# LSF_TARDIR="/usr/share/lsf_distrib/"', To: 'LSF_TARDIR="/vagrant/downloads/ibm_lsf_10.1_ubuntu20.04/"'}
+        - { From: '# LSF_ADD_SERVERS="hostm hosta hostb hostc"', To: 'LSF_ADD_SERVERS="node1 node2"'}
+        - { From: '# SILENT_INSTALL="Y"', To: 'SILENT_INSTALL="Y"'}
+        - { From: '# LSF_SILENT_INSTALL_TARLIST=""', To: 'LSF_SILENT_INSTALL_TARLIST="lsf10.1_linux2.6-glibc2.3-x86_64.tar.Z"'}
+        - { From: '# ACCEPT_LICENSE="N"', To: 'ACCEPT_LICENSE="Y"'}
+    - name: node_lsf_install
+      become: true
+      become_user: "{{ lsfadmin }}"
+      shell: |
+          if [ ! -f /opt/lsf/log/Install.log ]; then
+            ./lsfinstall -f install.config
+            sudo ./hostsetup --top="/opt/lsf" --boot="y" --setuid
+          fi
+      args:
+        chdir: 
+          ~{{ lsfadmin }}/lsf10.1_lsfinstall
+    - name: create_lsf_sudoers
+      become: true
+      become_user: "root"
+      copy:
+        dest: "/etc/lsf.sudoers"
+        content: |
+          LSF_STARTUP_PATH=/opt/lsf/10.1/linux2.6-glibc2.3-x86_64/etc
+          LSF_STARTUP_USERS="lsfadmin"       
+    - name: set_permission_lsf_sudoers
+      become: true
+      become_user: "root"
+      file:
+        path: "/etc/lsf.sudoers"
+        state: file
+        mode: 0600
+        owner: root
+      register: lsfd_service_update
+      notify: start_lsfd_servce
+    - name: update dot profile
+      become: true
+      become_user: "root"
+      blockinfile:
+        state: present
+        insertafter: EOF
+        dest: "{{ item.user_home }}/.profile"
+        marker: "# source lsf profile"
+        content: |
+          if [ -d "/opt/lsf" ] ; then
+            . /opt/lsf/conf/profile.lsf
+          fi
+      with_items:
+        - { user_home: /root }
+        - { user_home: "~{{ lsfadmin }}" }
+
+  handlers:
+    - name: start_lsfd_servce
+      become: true
+      become_user: "root"
+      service:
+        name: lsfd
+        state: restarted
+      when: lsfd_service_update.changed

@@ -1,0 +1,18 @@
+---
+- name: For each host, scan for its ssh public key
+  become: yes
+  become_user: "{{ user_item }}"
+  shell: "ssh-keyscan {{ item }},`dig +short {{ item }}`"
+  with_items: "{{ groups['all'] }}"
+  register: ssh_known_host_results
+  ignore_errors: yes
+
+- name: Add/update the public key in the ssh_known_hosts_file'
+  become: yes
+  become_user: "{{ user_item }}"
+  known_hosts:
+    name: "{{ item.item }}"
+    key: "{{ item.stdout }}"
+    path: "~{{ user_item }}/.ssh/known_hosts"
+  when: item != ansible_hostname
+  with_items: "{{ ssh_known_host_results.results }}"

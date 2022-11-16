@@ -1,0 +1,14 @@
+node1  ansible_host=192.168.56.15 
+node2  ansible_host=192.168.56.16 
+# master ansible_connection=local
+master ansible_host=192.168.56.4
+ 
+[all_nodes]
+master
+node[1:2]
+
+[nodes]
+node[1:2]
+
+[head]
+master

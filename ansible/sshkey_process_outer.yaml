@@ -1,0 +1,16 @@
+---
+- hosts: all
+  name: The outside loop for user ssh key process
+  vars: 
+    users:
+      - root
+      - lsfadmin
+  tasks:
+    - include_tasks: sshkey_exchange_inner.yaml
+      with_items: "{{ users }}"
+      loop_control: 
+        loop_var: user_item
+    - include_tasks: known_hosts_update_inner.yaml
+      with_items: "{{ users }}"
+      loop_control: 
+        loop_var: user_item
